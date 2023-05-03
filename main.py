@@ -1,7 +1,7 @@
 import datetime
 from tkinter import *
+from tkinter import filedialog, messagebox, simpledialog
 from matplotlib import pyplot as plt
-from tkinter import messagebox, simpledialog
 
 
 # This class is used to define the name, ID, type, quantity, and expiration date of product.
@@ -41,6 +41,23 @@ class Inventory:
                 expired_products.append(product)
         return expired_products
 
+    def save_inventory(self):
+        filename = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+        if filename:
+            with open(filename, "w") as f:
+                for product in self.products:
+                    product_data = f"{product.id},{product.name},{product.type},{product.quantity}," \
+                                   f"{product.expiration_date.strftime('%Y-%m-%d')}\n"
+                    f.write(product_data)
+    def load_inventory(self, filename):
+        self.products = []
+        with open(filename, "r") as f:
+            for line in f:
+                id, name, type, quantity, expiration_date = line.strip().split(',')
+                expiration_date = datetime.datetime.strptime(expiration_date, "%Y-%m-%d").date()
+                product = Product(id, name, type, int(quantity), expiration_date)
+                self.add_product(product, expiration_date)
+
 
 class UI:
     def __init__(self):
@@ -57,29 +74,14 @@ class UI:
 
         self.window.mainloop()
 
-    def item_output(self):
-        selected_product = self.product_listbox.curselection()
-        if selected_product:
-            selected_product = selected_product[0]
-            product = self.inventory.products[selected_product]
-            if product.quantity > 0:
-                product.quantity -= 1
-                self.update_product_list()
-            else:
-                messagebox.showerror("Error", "Product is out of stock.")
-
-    def item_input(self):
-        inventory_id = len(self.inventory.products) + 1
-        name = simpledialog.askstring("Input", "Product name:", parent=self.window)
-        product_type = simpledialog.askstring("Input", "Product type:", parent=self.window)
-        quantity = simpledialog.askinteger("Input", "Quantity:", parent=self.window)
-        expiration_date_str = simpledialog.askstring("Input", "Expiration date (yyyy-mm-dd):", parent=self.window)
-
-        if name and product_type and quantity and expiration_date_str:
-            expiration_date = datetime.datetime.strptime(expiration_date_str, "%Y-%m-%d").date()
-            product = Product(inventory_id, name, product_type, quantity, expiration_date)
-            self.inventory.add_product(product, expiration_date)
-            self.update_product_list()
+    def authenticate_user(self, username, password):
+        # Check if the username and password are valid
+        # For example, you could check if they match entries in a database
+        # or if they match hardcoded values
+        if username == "admin" and password == "password":
+            return True
+        else:
+            return False
 
     def create_login_screen(self):
         # Create login screen
@@ -101,6 +103,20 @@ class UI:
 
         self.login_button = Button(self.window, text="Login", command=self.login)
         self.login_button.pack(pady=10)
+
+    def login(self):
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+
+        if self.authenticate_user(username, password):
+            self.current_user = username
+            self.create_home_screen()
+        else:
+            messagebox.showerror("Error", "Invalid username or password.")
+
+    def logout(self):
+        self.current_user = None
+        self.create_login_screen()
 
     def create_home_screen(self):
         # Create home screen
@@ -133,6 +149,12 @@ class UI:
                                               command=self.show_expired_products)
         self.expired_products_button.pack(pady=10)
 
+        self.save_inventory_button = Button(self.window, text="Save Inventory", command=self.save_inventory)
+        self.save_inventory_button.pack(pady=10)
+
+        self.load_inventory_button = Button(self.window, text="Load Inventory", command=self.load_inventory)
+        self.load_inventory_button.pack(pady=10)
+
         self.product_listbox = Listbox(self.window, width=80, height=20)
         self.product_listbox.pack(pady=10)
 
@@ -141,15 +163,6 @@ class UI:
     def clear_window(self):
         for widget in self.window.winfo_children():
             widget.destroy()
-
-    def login(self):
-        # Need login functionality
-        self.current_user = self.username_entry.get()
-        self.create_home_screen()
-
-    def logout(self):
-        self.current_user = None
-        self.create_login_screen()
 
     def filter_by_type(self):
         type = self.filter_type_entry.get()
@@ -171,6 +184,30 @@ class UI:
         plt.ylabel("Quantity")
         plt.show()
 
+    def item_output(self):
+        selected_product = self.product_listbox.curselection()
+        if selected_product:
+            selected_product = selected_product[0]
+            product = self.inventory.products[selected_product]
+            if product.quantity > 0:
+                product.quantity -= 1
+                self.update_product_list()
+            else:
+                messagebox.showerror("Error", "Product is out of stock.")
+
+    def item_input(self):
+        inventory_id = len(self.inventory.products) + 1
+        name = simpledialog.askstring("Input", "Product name:", parent=self.window)
+        product_type = simpledialog.askstring("Input", "Product type:", parent=self.window)
+        quantity = simpledialog.askinteger("Input", "Quantity:", parent=self.window)
+        expiration_date_str = simpledialog.askstring("Input", "Expiration date (yyyy-mm-dd):", parent=self.window)
+
+        if name and product_type and quantity and expiration_date_str:
+            expiration_date = datetime.datetime.strptime(expiration_date_str, "%Y-%m-%d").date()
+            product = Product(inventory_id, name, product_type, quantity, expiration_date)
+            self.inventory.add_product(product, expiration_date)
+            self.update_product_list()
+
     def update_product_list(self, products=None):
         self.product_listbox.delete(0, END)
         if not products:
@@ -184,12 +221,19 @@ class UI:
 
     def show_expired_products(self):
         expired_products = self.inventory.check_expired_products()
-        if expired_products:
-            expired_products_str = "\n".join(
-                [f"{product.name} ({product.type}) - {product.expiration_date}" for product in expired_products])
-            messagebox.showwarning("Expired Products", expired_products_str)
-        else:
-            messagebox.showinfo("Expired Products", "No products have expired.")
+        self.update_product_list(expired_products)
+
+    def save_inventory(self):
+        self.inventory.save_inventory()
+
+    def load_inventory(self):
+        filename = filedialog.askopenfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+        if filename:
+            self.inventory.load_inventory(filename)
+            self.update_product_list()
+
+
+
 
 if __name__ == "__main__":
     ui = UI()
