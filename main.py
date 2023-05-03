@@ -1,22 +1,26 @@
+import datetime
 from tkinter import *
 from matplotlib import pyplot as plt
 from tkinter import messagebox, simpledialog
 
 
-# This class is used to define the name, ID, type, and quantity of product.
+# This class is used to define the name, ID, type, quantity, and expiration date of product.
 class Product:
-    def __init__(self, id, name, type, quantity):
+    def __init__(self, id, name, type, quantity, expiration_date):
         self.id = id
         self.name = name
         self.type = type
         self.quantity = quantity
+        self.expiration_date = expiration_date
+
 
 # This class keeps the inventory of the products
 class Inventory:
     def __init__(self):
         self.products = []
 
-    def add_product(self, product):
+    def add_product(self, product, expiration_date):
+        product.expiration_date = expiration_date
         self.products.append(product)
 
     def remove_product(self, product):
@@ -28,6 +32,15 @@ class Inventory:
             if product.type == type:
                 filtered_products.append(product)
         return filtered_products
+
+    def check_expired_products(self):
+        current_date = datetime.date.today()
+        expired_products = []
+        for product in self.products:
+            if product.expiration_date < current_date:
+                expired_products.append(product)
+        return expired_products
+
 
 class UI:
     def __init__(self):
@@ -60,10 +73,12 @@ class UI:
         name = simpledialog.askstring("Input", "Product name:", parent=self.window)
         product_type = simpledialog.askstring("Input", "Product type:", parent=self.window)
         quantity = simpledialog.askinteger("Input", "Quantity:", parent=self.window)
+        expiration_date_str = simpledialog.askstring("Input", "Expiration date (yyyy-mm-dd):", parent=self.window)
 
-        if name and product_type and quantity:
-            product = Product(inventory_id, name, product_type, quantity)
-            self.inventory.add_product(product)
+        if name and product_type and quantity and expiration_date_str:
+            expiration_date = datetime.datetime.strptime(expiration_date_str, "%Y-%m-%d").date()
+            product = Product(inventory_id, name, product_type, quantity, expiration_date)
+            self.inventory.add_product(product, expiration_date)
             self.update_product_list()
 
     def create_login_screen(self):
@@ -114,6 +129,10 @@ class UI:
         self.logout_button = Button(self.window, text="Logout", command=self.logout)
         self.logout_button.pack(pady=10)
 
+        self.expired_products_button = Button(self.window, text="Show Expired Products",
+                                              command=self.show_expired_products)
+        self.expired_products_button.pack(pady=10)
+
         self.product_listbox = Listbox(self.window, width=80, height=20)
         self.product_listbox.pack(pady=10)
 
@@ -157,8 +176,20 @@ class UI:
         if not products:
             products = self.inventory.products
         for product in products:
-            self.product_listbox.insert(END, f"{product.name} ({product.type}) - {product.quantity}")
+            if product.expiration_date < datetime.date.today():
+                item_text = f"{product.name} ({product.type}) - {product.quantity} (Expired)"
+            else:
+                item_text = f"{product.name} ({product.type}) - {product.quantity}"
+            self.product_listbox.insert(END, item_text)
+
+    def show_expired_products(self):
+        expired_products = self.inventory.check_expired_products()
+        if expired_products:
+            expired_products_str = "\n".join(
+                [f"{product.name} ({product.type}) - {product.expiration_date}" for product in expired_products])
+            messagebox.showwarning("Expired Products", expired_products_str)
+        else:
+            messagebox.showinfo("Expired Products", "No products have expired.")
 
 if __name__ == "__main__":
     ui = UI()
-
