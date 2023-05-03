@@ -1,0 +1,20 @@
+1,Cheese,Dairy,25,2023-05-30
+2,Milk,Dairy,10,2023-05-17
+3,BBQ Sauce,Condiment,17,2025-05-02
+4,Minced Garlic,Seasoning,50,2030-05-02
+5,Chocolate Milk,Dairy,2,2023-04-26
+6,Apples,Fruit,10,2023-05-05
+7,Bananas,Fruit,15,2023-05-07
+8,Carrots,Vegetable,20,2023-05-10
+9,Eggs,Dairy,30,2023-05-14
+10,Chicken Breasts,Meat,5,2023-05-15
+11,Orange Juice,Beverage,3,2023-05-12
+12,Bread,Grain,2,2023-05-13
+13,Salmon,Fish,2,2023-05-16
+14,Ground Beef,Meat,4,2023-05-20
+15,Potatoes,Vegetable,8,2023-05-25
+16,Ramen Noodles,Grain,12,2023-06-01
+17,Tomatoes,Vegetable,6,2023-05-27
+18,Spinach,Vegetable,3,2023-06-05
+19,Yogurt,Dairy,10,2023-05-31
+20,Applesauce,Fruit,4,2023-06-03
