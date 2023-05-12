@@ -20,11 +20,19 @@ class Inventory:
         self.products = []
 
     def add_product(self, product, expiration_date):
-        product.expiration_date = expiration_date
-        self.products.append(product)
+      for p in self.products:
+        if p.id == product.id:
+            p.quantity += product.quantity
+            p.expiration_date = expiration_date
+            return
+      product.expiration_date = expiration_date
+      self.products.append(product)
 
     def remove_product(self, product):
-        self.products.remove(product)
+      if product in self.products:
+          self.products.remove(product)
+      else:
+          raise ValueError("Product not found in inventory")
 
     def filter_products_by_type(self, type):
         filtered_products = []
